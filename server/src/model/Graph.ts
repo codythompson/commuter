@@ -9,25 +9,45 @@ export class GraphStateError extends Error {
   }
 }
 
+export class GraphObj {
+  readonly id: string = uuid()
+  constructor(readonly graph:Graph) {
+    this.graph.insert(this)
+  }
+}
+
 /**
  * A connection between two track sections (i.e. a Node).
  */
-export class Connection {
-  id: string = uuid()
+export class Connection extends GraphObj {
   trackSections: TrackSection[] = []
   x: number
   y: number
 
-  constructor(x:number, y:number) {
+  constructor(graph:Graph, x:number, y:number) {
+    super(graph)
     this.x = x
     this.y = y
+    this.graph.insertConnection(this)
+  }
+
+  get first(): TrackSection|null {
+    return this.trackSections.length > 0? this.trackSections[0] : null
+  }
+  get second(): TrackSection|null {
+    return this.trackSections.length > 1? this.trackSections[1] : null
   }
 
   fork():TrackSection {
-    const track = new TrackSection()
+    const track = new TrackSection(this.graph)
     track.connectionA = this
     this.trackSections.push(track)
     return track
+  }
+
+  toString(verbose:boolean = true) {
+    const idStr = verbose? `CONNECTION: {this.id} " - "` : "C: "
+    return `${idStr}${this.x},${this.y}`
   }
 }
 
@@ -36,25 +56,31 @@ export class Connection {
  * It can have Zero or Many platforms
  * It has length
  */
-export class TrackSection {
-  static start(x: number, y:number): TrackSection {
-    const track = new TrackSection()
-    const node = new Connection(x, y)
+export class TrackSection extends GraphObj {
+  static start(graph:Graph, x: number, y:number): TrackSection {
+    const track = new TrackSection(graph)
+    const node = new Connection(graph, x, y)
     track.connectionA = node
     node.trackSections.push(track)
     return track
   }
 
-  id: string = uuid()
   connectionA: Connection|null = null
   connectionB: Connection|null = null
   platforms: Platform[] = []
   // alowed vehicle types?
   // adjacent TrackSection???
 
+  get firstA(): TrackSection|null {
+    return this.connectionA != null? this.connectionA.first: null
+  }
+  get secondB(): TrackSection|null {
+    return this.connectionB != null? this.connectionB.second: null
+  }
+
   extend(x:number, y:number): TrackSection {
-    const node = new Connection(x, y)
-    const track = new TrackSection()
+    const node = new Connection(this.graph, x, y)
+    const track = new TrackSection(this.graph)
     if (this.connectionB != null) {
       throw new GraphStateError(`Already extended! ${this}`)
     }
@@ -65,8 +91,22 @@ export class TrackSection {
     return track
   }
 
-  toString() {
-    return `TrackSection:${this.id}`
+  fork(chainSplitFunction?:(continuation:TrackSection)=>TrackSection): TrackSection {
+    if (this.connectionA == null) {
+      throw new GraphStateError(`can't fork, connection A is null ${this}`)
+    }
+    const continuation = this.connectionA.fork()
+    if (chainSplitFunction != undefined) {
+      // this happens before any extends on the main chain
+      chainSplitFunction(continuation)
+    }
+    return this
+  }
+
+  public toString(): string {
+    const aStr = this.connectionA != null? this.connectionA.toString(false) : "null"
+    const bStr = this.connectionB != null? this.connectionB.toString(false) : "null"
+    return `TrackSection: ${this.id} - ${aStr} - B: ${bStr}`
   }
 }
 
@@ -74,8 +114,62 @@ export class TrackSection {
  * A platform connects two different kinds of networks (i.e. graphs)
  * (i.e. train to ped/carts network at station)
  */
-export class Platform {
-  id: string = uuid()
+export class Platform extends GraphObj {
   trackSections: TrackSection[] = []
   // capacity?
+}
+
+/**
+ * Represents a network of track
+ */
+export class Graph {
+  static getGeoString(x:number, y:number): string {
+    const xStr = Math.floor(x).toFixed(0)
+    const yStr = Math.floor(y).toFixed(0)
+    return `${xStr},${yStr}`
+  }
+
+  idLookup: Record<string, GraphObj> = {}
+  geoLookup: Record<string, Connection[]> = {}
+
+  insertConnection(connection:Connection):void {
+    const {x,y} = connection
+    const bucketId = Graph.getGeoString(x,y)
+    if (!(bucketId in this.geoLookup)) {
+      this.geoLookup[bucketId] = []
+    }
+    const bucket = this.geoLookup[bucketId]
+    bucket.push(connection)
+  }
+
+  insert(obj:GraphObj):void {
+    this.idLookup[obj.id] = obj
+  }
+
+  getGeoBucket(x:number, y:number): Connection[] {
+    const id = Graph.getGeoString(x, y)
+    if (id in this.geoLookup) {
+      return this.geoLookup[id]
+    }
+    return []
+  }
+
+  getRange(minX:number, minY:number, width:number, height:number): Connection[] {
+    // TODO: cache?
+
+    let result:Connection[] = []
+
+    const maxX = minX + width // exclusive max
+    const maxY = minY + height // exclusive max
+    for (let y = minY; y < maxY; y++) {
+      for (let x = minX; x < maxX; x++) {
+        const bucket = this.getGeoBucket(x, y)
+        if (bucket.length > 0) {
+          result = result.concat(this.getGeoBucket(x, y))
+        }
+      }
+    }
+
+    return result
+  }
 }
