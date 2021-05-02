@@ -1,12 +1,9 @@
 import express from "express"
-import { nextTick } from "node:process"
 import graph from "./devgraph"
 import { SerializeRange } from "./model/Serialized"
 import { handler } from "./result"
 
 const app = express()
-
-const devgraph = graph
 
 app.get("/range/:x0/:y0/:x1/:y1", handler(async ({req})=>{
   const {x0, y0, x1, y1} = req.params
