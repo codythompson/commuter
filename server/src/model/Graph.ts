@@ -1,4 +1,5 @@
 import {v4 as uuid} from "uuid"
+import { Serializable, SerializedConnection, SerializedPlatform, SerializedTrackSection } from "./Serialized"
 
 // DESIGN NOTE: All links/pointers are TWO WAY. Parent and
 // child must know of each other
@@ -9,11 +10,17 @@ export class GraphStateError extends Error {
   }
 }
 
-export class GraphObj {
+export abstract class GraphObj {
+  static nullOrID(obj:GraphObj|null): string|null {
+    return obj != null? obj.id : null
+  }
+
   readonly id: string = uuid()
   constructor(readonly graph:Graph) {
     this.graph.insert(this)
   }
+
+  abstract toJSON(): Serializable
 }
 
 /**
@@ -48,6 +55,16 @@ export class Connection extends GraphObj {
   toString(verbose:boolean = true) {
     const idStr = verbose? `CONNECTION: {this.id} " - "` : "C: "
     return `${idStr}${this.x},${this.y}`
+  }
+
+  toJSON(): SerializedConnection {
+    const {id, x, y} = this
+    return {
+      id,
+      x,
+      y,
+      trackSections: this.trackSections.map(section => section.id)
+    }
   }
 }
 
@@ -103,10 +120,32 @@ export class TrackSection extends GraphObj {
     return this
   }
 
+  /**
+   * Place a connection without adding a new track segment
+   * returns this
+   * @param x
+   * @param y
+   * @returns this
+   */
+  end(x:number, y:number):TrackSection {
+    this.connectionB = new Connection(this.graph, x, y)
+    return this
+  }
+
+
   public toString(): string {
     const aStr = this.connectionA != null? this.connectionA.toString(false) : "null"
     const bStr = this.connectionB != null? this.connectionB.toString(false) : "null"
     return `TrackSection: ${this.id} - ${aStr} - B: ${bStr}`
+  }
+
+  toJSON(): SerializedTrackSection {
+    return {
+      id: this.id,
+      connectionA: GraphObj.nullOrID(this.connectionA),
+      connectionB: GraphObj.nullOrID(this.connectionA),
+      platforms: this.platforms.map(platform => platform.id)
+    }
   }
 }
 
@@ -117,6 +156,13 @@ export class TrackSection extends GraphObj {
 export class Platform extends GraphObj {
   trackSections: TrackSection[] = []
   // capacity?
+
+  toJSON():SerializedPlatform {
+    return {
+      id: this.id,
+      trackSections: this.trackSections.map(section => section.id)
+    }
+  }
 }
 
 /**
