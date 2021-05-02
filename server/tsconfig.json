@@ -1,7 +1,6 @@
 {
   "extends": "@tsconfig/node12/tsconfig.json",
   "compilerOptions": {
-    "module": "es6",
     "allowSyntheticDefaultImports": true,
     "outDir": "dist"
   },
