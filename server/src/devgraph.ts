@@ -1,4 +1,4 @@
-import { Graph, TrackSection } from "./model/Graph";
+import { Graph, TrackSection } from "commuter-common";
 
 const graph = new Graph()
 TrackSection

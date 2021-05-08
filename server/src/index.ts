@@ -2,8 +2,11 @@ import express from "express"
 import graph from "./devgraph"
 import { SerializeRange } from "commuter-common"
 import { handler } from "./result"
+import cors from "cors"
 
 const app = express()
+
+app.use(cors())
 
 app.get("/range/:x0/:y0/:x1/:y1", handler(async ({req})=>{
   const {x0, y0, x1, y1} = req.params
@@ -17,4 +20,4 @@ app.get("/range/:x0/:y0/:x1/:y1", handler(async ({req})=>{
   return SerializeRange(range)
 }))
 
-app.listen(80)
+app.listen(3000)

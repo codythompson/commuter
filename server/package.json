@@ -13,12 +13,14 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@types/express": "^4.17.11",
     "commuter-common": "../common",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.10",
+    "@types/express": "^4.17.11",
     "@babel/core": "^7.14.0",
     "@babel/preset-env": "^7.14.0",
     "@babel/preset-typescript": "^7.13.0",
