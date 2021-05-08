@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js"
-import { SerializedRange } from "../../server/src/model/Serialized"
+import { SerializedRange } from "commuter-common"
 
 export class Application {
   pixiApp:PIXI.Application

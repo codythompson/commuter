@@ -19,6 +19,7 @@
     "webpack-cli": "^4.6.0"
   },
   "dependencies": {
+    "commuter-common": "../common",
     "pixi.js": "^6.0.2"
   }
 }
