@@ -1,6 +1,6 @@
 import express from "express"
 import graph from "./devgraph"
-import { SerializeRange } from "./model/Serialized"
+import { SerializeRange } from "commuter-common"
 import { handler } from "./result"
 
 const app = express()
