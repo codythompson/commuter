@@ -1,0 +1,10 @@
+{
+  "extends": "@tsconfig/node12/tsconfig.json",
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "outDir": "dist"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.test.ts"],
+  "declaration": true
+}
