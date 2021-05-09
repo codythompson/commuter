@@ -143,7 +143,7 @@ export class TrackSection extends GraphObj {
     return {
       id: this.id,
       connectionA: GraphObj.nullOrID(this.connectionA),
-      connectionB: GraphObj.nullOrID(this.connectionA),
+      connectionB: GraphObj.nullOrID(this.connectionB),
       platforms: this.platforms.map(platform => platform.id)
     }
   }
