@@ -1,0 +1,16 @@
+# TODO
+- train stream
+    - figure out how to send/receive over stream instead of connection
+    - draw some dots based on velocity from stream
+    - sync the dots????
+- actions
+    - send down available actions 
+    - cache actions on client?
+    - implement actions server side
+- better common data structure
+    - cache ranges inside fully reinflated graph?
+- platforms?
+- lines?
+- more complex graphics?
+- persistent state on the server?
+- users/perms?
