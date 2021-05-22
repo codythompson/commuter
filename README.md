@@ -1,12 +1,16 @@
 # TODO
-- train stream
-    - figure out how to send/receive over stream instead of connection
-    - draw some dots based on velocity from stream
-    - sync the dots????
+- platforms
+    - render something?
+- routes model
+    - platforms, tracks, trains?
+- trains
+    - blocked/need routes first
+    - sync periodically with server postion, velocity, route, platform?, loading?
 - actions
     - send down available actions 
     - cache actions on client?
     - implement actions server side
+- register client?
 - better common data structure
     - cache ranges inside fully reinflated graph?
 - platforms?
