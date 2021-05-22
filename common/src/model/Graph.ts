@@ -1,4 +1,5 @@
 import {v4 as uuid} from "uuid"
+import { Route } from "./Route"
 import { Serializable, SerializedConnection, SerializedPlatform, SerializedTrackSection } from "./Serialized"
 
 // DESIGN NOTE: All links/pointers are TWO WAY. Parent and
@@ -120,6 +121,19 @@ export class TrackSection extends GraphObj {
     return this
   }
 
+  addPlatform(existing?:Platform): Platform {
+    let platform:Platform
+    if (existing != undefined) {
+      platform = existing
+    }
+    else {
+      platform = new Platform(this.graph)
+    }
+    platform.trackSections.push(this)
+    this.platforms.push(platform)
+    return platform
+  }
+
   /**
    * Place a connection without adding a new track segment
    * returns this
@@ -155,12 +169,14 @@ export class TrackSection extends GraphObj {
  */
 export class Platform extends GraphObj {
   trackSections: TrackSection[] = []
+  routes: Route[] = []
   // capacity?
 
   toJSON():SerializedPlatform {
     return {
       id: this.id,
-      trackSections: this.trackSections.map(section => section.id)
+      trackSections: this.trackSections.map(section => section.id),
+      routes: this.routes.map(route => route.id)
     }
   }
 }

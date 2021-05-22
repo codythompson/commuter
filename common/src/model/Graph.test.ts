@@ -31,6 +31,27 @@ describe("TrackSection", () => {
       expect(extension.connectionB).toBeNull()
     })
   })
+
+  describe("addPlatform", () => {
+    it("should setup the platform pointers correctly", () => {
+      const trackA = TrackSection.start(graph, -2.24, 3.14)
+      const trackB = TrackSection.start(graph, 3, 4)
+      const platformA = trackA.addPlatform()
+      expect(platformA.trackSections.length).toBe(1)
+      expect(platformA.trackSections[0]).toBe(trackA)
+      expect(trackA.platforms.length).toBe(1)
+      expect(trackA.platforms[0]).toBe(platformA)
+
+      trackB.addPlatform(platformA)
+      expect(platformA.trackSections.length).toBe(2)
+      expect(platformA.trackSections[0]).toBe(trackA)
+      expect(platformA.trackSections[1]).toBe(trackB)
+      expect(trackA.platforms.length).toBe(1)
+      expect(trackA.platforms[0]).toBe(platformA)
+      expect(trackB.platforms.length).toBe(1)
+      expect(trackB.platforms[0]).toBe(platformA)
+    })
+  })
 })
 
 describe("Connection", ()=> {

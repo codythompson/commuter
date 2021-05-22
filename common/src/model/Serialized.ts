@@ -6,7 +6,7 @@ export type Serializable = {
 
 export type SerializedConnection = Serializable&{x:number, y:number, trackSections:string[]}
 export type SerializedTrackSection = Serializable&{connectionA:string|null, connectionB:string|null, platforms:string[]}
-export type SerializedPlatform = Serializable&{trackSections:string[]}
+export type SerializedPlatform = Serializable&{trackSections:string[], routes:string[]}
 
 export type SerializedRange = {
   connections: Record<string, SerializedConnection>
