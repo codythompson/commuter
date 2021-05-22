@@ -1,9 +1,11 @@
 // TODO dynamic config
 
-import { SerializedConnection, SerializedRange } from "commuter-common";
+import { SerializedRange } from "commuter-common";
+import { io } from "socket.io-client";
 
 let config = {
-  baseURL: "http://localhost:3000"
+  // baseURL: "http://localhost:3000"
+  baseURL: ""
 }
 
 export enum DataState {
@@ -67,5 +69,16 @@ export class Client {
       this.rangeState = DataState.IN_USE
       return this.range
     }
+  }
+
+  connectSocket():void {
+    const socket = io()
+    socket.on("hello", (msg) => {
+      console.log("hello got:")
+      console.log(msg)
+      socket.emit("world", {
+        world: true
+      })
+    })
   }
 }

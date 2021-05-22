@@ -3,8 +3,14 @@ import graph from "./devgraph"
 import { SerializeRange } from "commuter-common"
 import { handler } from "./result"
 import cors from "cors"
+import http from "http"
+import { Server } from "socket.io"
 
 const app = express()
+const httpServer = http.createServer(app)
+const io = new Server(httpServer, {
+  cors: { }
+})
 
 app.use(cors())
 
@@ -17,12 +23,17 @@ app.get("/range/:x0/:y0/:x1/:y1", handler(async ({req})=>{
   const width = x1n - x
   const height = y1n - y
   const range = graph.getRange(x, y, width, height)
-  for (let conn of range) {
-    if (conn.first?.connectionA == conn.first?.connectionB) {
-      console.log("Samesies pre serialize")
-    }
-  }
   return SerializeRange(range)
 }))
 
-app.listen(3000)
+io.on("connection", (socket) => {
+  socket.emit("hello", {
+    hello: true
+  })
+  socket.on("world", (msg) => {
+    console.log(msg)
+  })
+})
+
+httpServer.listen(3000)
+// app.listen(3000)

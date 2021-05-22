@@ -10,4 +10,6 @@ window.addEventListener("load", ()=>{
   const app = new Application()
   globals.app = app
   globals.client = Client
+
+  setTimeout(() => app.client.connectSocket(), 2000)
 })
