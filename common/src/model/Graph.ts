@@ -362,6 +362,7 @@ export class Graph {
     let current:string|null = destination.id
     if (prev[current] != undefined || current == source.id) {
       while (current != undefined) {
+        result.unshift(this.trackLookup[current])
         current = prev[current]
       }
     }

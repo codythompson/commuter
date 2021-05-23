@@ -187,7 +187,12 @@ describe("Graph", () => {
 
       const lB2lT = lB.getTrack(lT)
       const lT2mT = lT.getTrack(mT)
-      expect(graph.findPath(lB.getTrack(lT), lT.getTrack(mT)).length).toBe(2)
+      const r2mB = r.getTrack(mB)
+      const lB2mB = lB.getTrack(mB)
+      const upperMiddle = mM.getTrack(mT)
+      expect(graph.findPath(lB2lT, lT2mT)).toEqual([lB2lT, lT2mT])
+      expect(graph.findPath(r2mB, lB2lT)).toEqual([r2mB, lB2mB, lB2lT])
+      expect(graph.findPath(upperMiddle, r2mB).length).toBe(3)
     })
   })
 })
