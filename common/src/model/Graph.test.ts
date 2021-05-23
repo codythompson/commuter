@@ -1,4 +1,4 @@
-import { Graph, TrackSection } from "./Graph"
+import { Connection, Graph, TrackSection } from "./Graph"
 
 describe("TrackSection", () => {
   let graph:Graph
@@ -32,6 +32,19 @@ describe("TrackSection", () => {
     })
   })
 
+  describe("connect", () => {
+    it("should connect connections correctly", () => {
+      const tA = TrackSection.start(graph, 1, 1)
+      const tB = TrackSection.start(graph, 2, 2)
+      tA.connect(tB, 1, 2)
+      expect(tB.connectionB.x).toBe(1)
+      expect(tB.connectionB.y).toBe(2)
+      expect(tA.connectionB.x).toBe(1)
+      expect(tA.connectionB.y).toBe(2)
+      expect(tA.connectionB).toBe(tB.connectionB)
+    })
+  })
+
   describe("addPlatform", () => {
     it("should setup the platform pointers correctly", () => {
       const trackA = TrackSection.start(graph, -2.24, 3.14)
@@ -59,6 +72,25 @@ describe("Connection", ()=> {
 
   beforeEach(() => {
     graph = new Graph()
+  })
+
+  describe("extend", ()=> {
+    it("should connect everything correctly", ()=> {
+      const a = new Connection(graph, -2.24, 3.14)
+      const b = a.extend(2, 4.5)
+      const c = a.extend(1, 1)
+
+      expect(a.first).not.toBeNull()
+      expect(a.second).not.toBeNull()
+      expect(b.x).toBe(2)
+      expect(b.y).toBe(4.5)
+      expect(b.first).toBe(a.first)
+      expect(b.second).toBeNull()
+      expect(c.x).toBe(1)
+      expect(c.y).toBe(1)
+      expect(c.first).toBe(a.second)
+      expect(c.second).toBeNull()
+    })
   })
 
   describe("fork", ()=> {
@@ -139,6 +171,23 @@ describe("Graph", () => {
       range = graph.getRange(-13, -5, 26, 10)
       expect(range.length).toBe(5)
       expect(range[3]).toBe(forkedLast.connectionA)
+    })
+  })
+
+  describe("findPath", () => {
+    it("should find the shortest path", () => {
+      const lT = new Connection(graph, 0, 0)
+      const lB = lT.extend(0, 2)
+      const mT = lT.extend(1, 0)
+      const mM = mT.extend(1, 1)
+      const mB = mM.extend(1, 2)
+      mB.connect(lB)
+      const r = mT.extend(2, 1)
+      mB.connect(r)
+
+      const lB2lT = lB.getTrack(lT)
+      const lT2mT = lT.getTrack(mT)
+      expect(graph.findPath(lB.getTrack(lT), lT.getTrack(mT)).length).toBe(2)
     })
   })
 })

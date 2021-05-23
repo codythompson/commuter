@@ -12,9 +12,8 @@
     - implement actions server side
 - register client?
 - better common data structure
+    - rework GraphObj creation methods to work with connections (AKA nodes) instead of tracksections (AKA edges). The current .extend and .fork methods are a bit awkward.
     - cache ranges inside fully reinflated graph?
-- platforms?
-- lines?
 - more complex graphics?
 - persistent state on the server?
 - users/perms?

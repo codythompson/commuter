@@ -46,6 +46,38 @@ export class Connection extends GraphObj {
     return this.trackSections.length > 1? this.trackSections[1] : null
   }
 
+  extend(x: number, y:number):Connection {
+    const newConn = new Connection(this.graph, x, y)
+    const newTrack = new TrackSection(this.graph)
+    this.trackSections.push(newTrack)
+    newConn.trackSections.push(newTrack)
+    newTrack.connectionA = this
+    newTrack.connectionB = newConn
+    return newConn
+  }
+
+  connect(other:Connection): Connection {
+    const newTrack = new TrackSection(this.graph)
+    newTrack.connectionA = this
+    newTrack.connectionB = other
+    this.trackSections.push(newTrack)
+    other.trackSections.push(newTrack)
+    return other
+  }
+
+  getTrack(other:Connection): TrackSection|null {
+    for (let track of this.trackSections) {
+      if (track.connectionA == other || track.connectionB == other) {
+        return track
+      }
+    }
+    return null
+  }
+
+  /**
+   * @deprecated
+   * @returns 
+   */
   fork():TrackSection {
     const track = new TrackSection(this.graph)
     track.connectionA = this
@@ -96,6 +128,12 @@ export class TrackSection extends GraphObj {
     return this.connectionB != null? this.connectionB.second: null
   }
 
+  /**
+   * @deprecated
+   * @param x 
+   * @param y 
+   * @returns 
+   */
   extend(x:number, y:number): TrackSection {
     const node = new Connection(this.graph, x, y)
     const track = new TrackSection(this.graph)
@@ -109,6 +147,11 @@ export class TrackSection extends GraphObj {
     return track
   }
 
+  /**
+   * @deprecated
+   * @param chainSplitFunction 
+   * @returns 
+   */
   fork(chainSplitFunction?:(continuation:TrackSection)=>TrackSection): TrackSection {
     if (this.connectionA == null) {
       throw new GraphStateError(`can't fork, connection A is null ${this}`)
@@ -118,6 +161,25 @@ export class TrackSection extends GraphObj {
       // this happens before any extends on the main chain
       chainSplitFunction(continuation)
     }
+    return this
+  }
+
+  /**
+   * @deprecated
+   * @param otherTrack 
+   * @param x 
+   * @param y 
+   * @returns 
+   */
+  connect(otherTrack:TrackSection, x:number, y:number):TrackSection {
+    if (this.connectionB != null) {
+      throw new GraphStateError(`can't connect, connection B is NOT null ${this}`)
+    }
+    if (otherTrack.connectionB != null) {
+      throw new GraphStateError(`can't connect, other track's connection B is NOT null ${otherTrack}`)
+    }
+    this.end(x, y)
+    otherTrack.connectionB = this.connectionB
     return this
   }
 
@@ -146,6 +208,16 @@ export class TrackSection extends GraphObj {
     return this
   }
 
+  getNeighbors():TrackSection[] {
+    let neighbors:TrackSection[] = []
+    if (this.connectionA != null) {
+      neighbors = neighbors.concat(this.connectionA.trackSections.filter(track => track.id != this.id))
+    }
+    if (this.connectionB != null) {
+      neighbors = neighbors.concat(this.connectionB.trackSections.filter(track => track.id != this.id))
+    }
+    return neighbors
+  }
 
   public toString(): string {
     const aStr = this.connectionA != null? this.connectionA.toString(false) : "null"
@@ -192,6 +264,7 @@ export class Graph {
   }
 
   idLookup: Record<string, GraphObj> = {}
+  trackLookup: Record<string, TrackSection> = {}
   geoLookup: Record<string, Connection[]> = {}
 
   insertConnection(connection:Connection):void {
@@ -206,6 +279,9 @@ export class Graph {
 
   insert(obj:GraphObj):void {
     this.idLookup[obj.id] = obj
+    if (obj instanceof TrackSection) {
+      this.trackLookup[obj.id] = obj
+    }
   }
 
   getGeoBucket(x:number, y:number): Connection[] {
@@ -229,6 +305,64 @@ export class Graph {
         if (bucket.length > 0) {
           result = result.concat(this.getGeoBucket(x, y))
         }
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Find the shortest path from the source track-section to the destination track section
+   * TODO: make it distance base instead of track section count based
+   * adapted from:
+   * https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#Pseudocode
+   * @param source 
+   * @param destination 
+   * @returns 
+   */
+  findPath(source:TrackSection, destination:TrackSection):TrackSection[] {
+    // Sort of Dijkstras
+    let tracks = Object.values(this.trackLookup)
+
+    const dist:Record<string, number> = {}
+    const prev:Record<string, string> = {}
+    const visited:Record<string, boolean> = {}
+
+    for (let track of tracks) {
+      dist[track.id] = Infinity
+    }
+    dist[source.id] = 0
+
+    while (tracks.length > 0) {
+      // sort such that closest is last
+      tracks = tracks.sort((n,m)=>dist[m.id]-dist[n.id])
+      // get closest still in the tracks array (AKA Q)
+      const track = tracks.pop() as TrackSection
+      visited[track.id] = true
+
+      if (track.id == destination.id) {
+        // found the shortest path
+        break;
+      }
+
+      // only look at neighbors that are still in tracks (AKA not visited)
+      const neighbors = track.getNeighbors()
+        .filter(neighbor => !visited[neighbor.id])
+      for (let neighbor of neighbors) {
+        const distTrackNeighbor = dist[track.id] + 1 // TODO: actual track section length
+        if (distTrackNeighbor < dist[neighbor.id]) {
+          dist[neighbor.id] = distTrackNeighbor
+          prev[neighbor.id] = track.id
+        }
+      }
+    }
+
+    // Now we can read the shortest path from source to target by reverse iteration: (see wiki)
+    const result:TrackSection[] = []
+    let current:string|null = destination.id
+    if (prev[current] != undefined || current == source.id) {
+      while (current != undefined) {
+        current = prev[current]
       }
     }
 
