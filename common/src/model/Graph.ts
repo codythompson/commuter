@@ -267,6 +267,29 @@ export class Graph {
   trackLookup: Record<string, TrackSection> = {}
   geoLookup: Record<string, Connection[]> = {}
 
+  private pathCache:Record<string, Record<string, TrackSection[]>> = {}
+
+  private clearCache(): void {
+    this.pathCache = {}
+  }
+
+  private getPathFromCache(source:TrackSection, destination:TrackSection):TrackSection[]|null {
+    if (source.id in this.pathCache) {
+      const sourceCache = this.pathCache[source.id]
+      if (destination.id in sourceCache) {
+        return sourceCache[destination.id]
+      }
+    }
+    return null
+  }
+
+  private cachePath(sourceId:string, destinationId:string, path:TrackSection[]):void {
+    if (!(sourceId in this.pathCache)) {
+      this.pathCache[sourceId] = {}
+    }
+    this.pathCache[sourceId][destinationId] = path
+  }
+
   insertConnection(connection:Connection):void {
     const {x,y} = connection
     const bucketId = Graph.getGeoString(x,y)
@@ -278,6 +301,7 @@ export class Graph {
   }
 
   insert(obj:GraphObj):void {
+    this.clearCache()
     this.idLookup[obj.id] = obj
     if (obj instanceof TrackSection) {
       this.trackLookup[obj.id] = obj
@@ -321,6 +345,11 @@ export class Graph {
    * @returns 
    */
   findPath(source:TrackSection, destination:TrackSection):TrackSection[] {
+    const cachedPath = this.getPathFromCache(source, destination)
+    if (cachedPath != null) {
+      return cachedPath
+    }
+
     // Sort of Dijkstras
     let tracks = Object.values(this.trackLookup)
 
@@ -366,6 +395,8 @@ export class Graph {
         current = prev[current]
       }
     }
+
+    this.cachePath(source.id, destination.id, result)
 
     return result
   }
